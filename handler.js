@@ -7,6 +7,7 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const crypto = require('crypto');
 const timingSafeCompare = require('tsscmp');
 const modalView = require('./views/create_record');
+const slackUrls = require('./config/config').slack_urls;
 
 const verifyRequest = (request) => new Promise((resolve, reject) => {
   try {
@@ -49,17 +50,17 @@ const fakeAuth = async (event) => {
       code: event.queryStringParameters.code,
       client_id: process.env.client_id,
       client_secret: process.env.client_secret,
-      redirect_uri: 'https://r825kddegc.execute-api.us-east-1.amazonaws.com/dev/slack'
+      redirect_uri: slackUrls.redirect_uri
     };
-    const result = await axios.post('https://slack.com/api/oauth.v2.access', qs.stringify(data));
+    const result = await axios.post(slackUrls.oauth, qs.stringify(data));
 
     if (!result || !result.data || !result.data.access_token) {
-      return ecb(403);
+      return ecb(399);
     }
     return {
       statusCode: 302,
       headers: {
-        Location: 'https://slack.com/app_redirect?app=A01CN83B9B4'
+        Location: slackUrls.deep_link
       }
     };
   } catch (err) {
@@ -71,8 +72,7 @@ const installApp = async () => {
   return {
     statusCode: 302,
     headers: {
-      Location: 'https://slack.com/oauth/authorize',
-      client_id: '1430480045587.1430275383378'
+      Location: `${slackUrls.authorize}?client_id=${process.env.client_id}&scope=commands`,
     }
   };
 };
@@ -84,7 +84,7 @@ const sendModal = (payload) => {
     view: JSON.stringify(modalView)
   };
 
-  return axios.post('https://slack.com/api/views.open', qs.stringify(viewData));
+  return axios.post(slackUrls.modal_open, qs.stringify(viewData));
 };
 
 const saveToDynamo = (values) => new Promise((resolve, reject) => {
