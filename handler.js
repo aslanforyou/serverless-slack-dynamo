@@ -32,15 +32,15 @@ const verifyRequest = (request) => new Promise((resolve, reject) => {
   }
 });
 
-const scb = (body) => {
+const scb = () => {
   return {
     statusCode: 200,
-    body: JSON.stringify(body || {})
+    body: JSON.stringify({})
   };
 };
 const ecb = (code) => {
   return {
-    statusCode: code,
+    statusCode: code || 398,
   };
 };
 
